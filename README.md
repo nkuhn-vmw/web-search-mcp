@@ -77,30 +77,51 @@ The MCP server will be available at:
 
 ## Cloud Foundry Deployment
 
-### 1. Update the manifest
+### 1. Create/Bind SSO Service
 
-Edit `manifest.yml` with your specific configuration:
+The app auto-configures OAuth2 from Cloud Foundry SSO service bindings (p-identity, sso, uaa, xsuaa):
+
+```bash
+# If using Tanzu Application Service Single Sign-On
+cf create-service p-identity standard my-sso
+
+# Bind to your app
+cf bind-service web-search-mcp my-sso
+```
+
+### 2. Update manifest.yml
+
+Edit `manifest.yml` with your SSO service name:
 
 ```yaml
 applications:
   - name: web-search-mcp
     env:
       WEBSEARCH_API_KEY: your-api-key
-      WEBSEARCH_PROVIDER: BRAVE
-      OAUTH2_JWK_SET_URI: https://your-auth-server/.well-known/jwks.json
-      OAUTH2_ISSUER_URI: https://your-auth-server
+    services:
+      - my-sso  # Your SSO service instance name
 ```
 
-### 2. Push to Cloud Foundry
+### 3. Push to Cloud Foundry
 
 ```bash
 ./mvnw clean package
 cf push
 ```
 
-### 3. Bind Services (Optional)
+### Manual OAuth2 Configuration (Alternative)
 
-For production, bind to a credentials service instead of hardcoding:
+If not using SSO service binding, set these environment variables:
+
+```bash
+cf set-env web-search-mcp OAUTH2_JWK_SET_URI "https://your-auth/.well-known/jwks.json"
+cf set-env web-search-mcp OAUTH2_ISSUER_URI "https://your-auth"
+cf restage web-search-mcp
+```
+
+### Using User-Provided Service for API Key
+
+For production, store API key in a service instead of manifest:
 
 ```bash
 cf create-user-provided-service web-search-credentials -p '{"api_key":"your-key"}'

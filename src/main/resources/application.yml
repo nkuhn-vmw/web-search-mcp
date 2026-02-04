@@ -58,6 +58,8 @@ spring:
     activate:
       on-profile: cloud
 
+  # OAuth2 config - auto-configured from SSO service binding via CloudFoundrySsoConfig
+  # These env vars are fallbacks if no SSO service is bound
   security:
     oauth2:
       resourceserver:
@@ -69,6 +71,7 @@ logging:
   level:
     com.example.websearchmcp: INFO
     org.springframework.ai.mcp: INFO
+    io.pivotal.cfenv: INFO
 
 ---
 # Local development profile
