@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: web-search-mcp-server
+
+  ai:
+    mcp:
+      server:
+        name: web-search-mcp
+        version: 1.0.0
+        type: SYNC
+        protocol: SSE
+        sse-message-endpoint: /mcp/message
+        annotation-scanner:
+          enabled: true
+          base-packages:
+            - com.example.websearchmcp.tools
+
+# Default web search configuration
+websearch:
+  api-key: ${WEBSEARCH_API_KEY:}
+  provider: ${WEBSEARCH_PROVIDER:BRAVE}
+  default-result-count: 10
+  rate-limit-per-minute: 60
+  cache-expiration-seconds: 300
+
+# Actuator endpoints for Cloud Foundry health checks
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  health:
+    livenessState:
+      enabled: true
+    readinessState:
+      enabled: true
+
+# Server configuration
+server:
+  port: ${PORT:8080}
+  forward-headers-strategy: framework
+
+# Logging
+logging:
+  level:
+    com.example.websearchmcp: INFO
+    org.springframework.ai.mcp: DEBUG
+
+---
+# Cloud profile (auto-activated on Cloud Foundry)
+spring:
+  config:
+    activate:
+      on-profile: cloud
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OAUTH2_JWK_SET_URI:}
+          issuer-uri: ${OAUTH2_ISSUER_URI:}
+
+logging:
+  level:
+    com.example.websearchmcp: INFO
+    org.springframework.ai.mcp: INFO
+
+---
+# Local development profile
+spring:
+  config:
+    activate:
+      on-profile: local
+
+websearch:
+  api-key: ${WEBSEARCH_API_KEY:your-api-key-here}
+  provider: BRAVE
+  rate-limit-per-minute: 100
+
+logging:
+  level:
+    com.example.websearchmcp: DEBUG
+    org.springframework.ai.mcp: DEBUG

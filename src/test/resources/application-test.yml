@@ -1,0 +1,20 @@
+spring:
+  ai:
+    mcp:
+      server:
+        name: web-search-mcp-test
+        type: SYNC
+        protocol: SSE
+
+websearch:
+  api-key: test-api-key
+  provider: BRAVE
+  default-result-count: 10
+  rate-limit-per-minute: 100
+  cache-expiration-seconds: 60
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
