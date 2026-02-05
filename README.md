@@ -113,6 +113,70 @@ curl -X POST "https://uaa.sys.your-domain.com/oauth/token" \
   -d "grant_type=client_credentials&client_id=YOUR_CLIENT_ID&client_secret=YOUR_CLIENT_SECRET"
 ```
 
+<!-- ============================================================
+     LONG-LIVED TOKEN SETUP
+     Use this for service accounts or automated integrations
+     that need tokens that don't expire frequently
+     ============================================================ -->
+
+### Creating a Long-Lived Token (Service Account)
+
+For automated integrations or service accounts, you can create a UAA client with a long-lived token (e.g., 10 years):
+
+**Prerequisites:**
+- Ruby installed (`ruby --version`)
+- UAA admin client secret (from Ops Manager > TAS tile > Credentials > UAA Admin Client)
+
+**Step 1: Install the UAA CLI**
+```bash
+gem install cf-uaac
+```
+
+**Step 2: Target and authenticate to UAA**
+```bash
+# Target your UAA
+uaac target https://uaa.sys.your-domain.com --skip-ssl-validation
+
+# Login with admin client (get secret from Ops Manager)
+uaac token client get admin -s <ADMIN_CLIENT_SECRET>
+```
+
+**Step 3: Create a long-lived client**
+```bash
+# Create client with 10-year token validity (315360000 seconds)
+uaac client add mcp-service-account \
+  --name mcp-service-account \
+  --secret "your-secure-secret-here" \
+  --authorized_grant_types client_credentials \
+  --authorities openid,uaa.resource \
+  --access_token_validity 315360000
+```
+
+**Step 4: Get a token with your new client**
+```bash
+# Authenticate as the new client
+uaac token client get mcp-service-account -s "your-secure-secret-here"
+
+# View the token
+uaac context
+
+# Or get just the token value
+TOKEN=$(uaac context | grep access_token | awk '{print $2}')
+echo $TOKEN
+```
+
+**Alternative: Get token via curl**
+```bash
+TOKEN=$(curl -sk -X POST "https://uaa.sys.your-domain.com/oauth/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "grant_type=client_credentials&client_id=mcp-service-account&client_secret=your-secure-secret-here" \
+  | jq -r '.access_token')
+
+echo $TOKEN
+```
+
+<!-- END LONG-LIVED TOKEN SETUP -->
+
 ### Making Authenticated Requests
 
 ```bash
