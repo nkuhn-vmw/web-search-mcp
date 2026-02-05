@@ -8,8 +8,9 @@ spring:
         name: web-search-mcp
         version: 1.0.0
         type: SYNC
-        protocol: SSE
-        sse-message-endpoint: /mcp/message
+        protocol: STREAMABLE
+        streamable-http:
+          mcp-endpoint: /mcp
         annotation-scanner:
           enabled: true
           base-packages:

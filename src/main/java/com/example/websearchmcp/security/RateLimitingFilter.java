@@ -36,7 +36,7 @@ public class RateLimitingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        if (!request.getRequestURI().startsWith("/mcp") && !request.getRequestURI().startsWith("/sse")) {
+        if (!request.getRequestURI().startsWith("/mcp")) {
             filterChain.doFilter(request, response);
             return;
         }

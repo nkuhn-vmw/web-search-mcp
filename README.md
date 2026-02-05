@@ -4,7 +4,7 @@ A secure Spring Boot MCP (Model Context Protocol) server that provides web searc
 
 ## Features
 
-- **MCP Protocol Support**: SSE (Server-Sent Events) transport for real-time communication
+- **MCP Protocol Support**: Streamable HTTP transport for real-time communication
 - **Multiple Search Providers**: Brave Search API, SerpAPI, or Google Custom Search
 - **Cloud Foundry SSO Integration**: Auto-configures OAuth2 from p-identity/UAA service bindings
 - **Security**: JWT authentication, rate limiting, and secure credential management
@@ -46,8 +46,20 @@ The server will be available at `http://localhost:8080`
 # Health check
 curl http://localhost:8080/actuator/health
 
-# SSE endpoint (no auth in local mode)
-curl http://localhost:8080/sse
+# MCP endpoint - Initialize (no auth in local mode)
+curl -X POST http://localhost:8080/mcp \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {},
+      "clientInfo": {"name": "test-client", "version": "1.0"}
+    }
+  }'
 ```
 
 ---
@@ -182,37 +194,11 @@ echo $TOKEN
 ```bash
 TOKEN=$(cf oauth-token | sed 's/bearer //')
 
-# Test SSE endpoint
-curl -H "Authorization: Bearer $TOKEN" \
-     https://your-app.apps.your-domain.com/sse
-
-# Returns: event:endpoint
-#          data:/mcp/message?sessionId=<uuid>
-```
-
----
-
-## Using the MCP Server
-
-### 1. Connect to SSE Endpoint
-
-```bash
-TOKEN=$(cf oauth-token | sed 's/bearer //')
-curl -H "Authorization: Bearer $TOKEN" https://your-app.apps.your-domain.com/sse
-```
-
-Response:
-```
-event:endpoint
-data:/mcp/message?sessionId=abc123-def456
-```
-
-### 2. Initialize Session
-
-```bash
-curl -X POST "https://your-app.apps.your-domain.com/mcp/message?sessionId=abc123-def456" \
+# Initialize MCP session
+curl -X POST "https://your-app.apps.your-domain.com/mcp" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
   -d '{
     "jsonrpc": "2.0",
     "id": 1,
@@ -225,21 +211,54 @@ curl -X POST "https://your-app.apps.your-domain.com/mcp/message?sessionId=abc123
   }'
 ```
 
-### 3. List Available Tools
+---
+
+## Using the MCP Server
+
+With Streamable HTTP, all MCP communication happens via a single `POST /mcp` endpoint. No separate SSE connection is needed — the server uses session IDs returned in the `Mcp-Session-Id` response header to maintain state.
+
+### 1. Initialize Session
 
 ```bash
-curl -X POST "https://your-app.apps.your-domain.com/mcp/message?sessionId=abc123-def456" \
+TOKEN=$(cf oauth-token | sed 's/bearer //')
+
+curl -X POST "https://your-app.apps.your-domain.com/mcp" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -d '{
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "initialize",
+    "params": {
+      "protocolVersion": "2024-11-05",
+      "capabilities": {},
+      "clientInfo": {"name": "my-client", "version": "1.0"}
+    }
+  }'
+```
+
+Save the `Mcp-Session-Id` header from the response for subsequent requests.
+
+### 2. List Available Tools
+
+```bash
+curl -X POST "https://your-app.apps.your-domain.com/mcp" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Mcp-Session-Id: <session-id-from-init>" \
   -d '{"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}}'
 ```
 
-### 4. Call a Tool
+### 3. Call a Tool
 
 ```bash
-curl -X POST "https://your-app.apps.your-domain.com/mcp/message?sessionId=abc123-def456" \
+curl -X POST "https://your-app.apps.your-domain.com/mcp" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
+  -H "Accept: application/json, text/event-stream" \
+  -H "Mcp-Session-Id: <session-id-from-init>" \
   -d '{
     "jsonrpc": "2.0",
     "id": 3,
@@ -310,9 +329,10 @@ curl -X POST "https://your-app.apps.your-domain.com/mcp/message?sessionId=abc123
 │   (Client)      │◀────│  (Spring Boot)   │◀────│  (Brave/etc)    │
 └─────────────────┘     └──────────────────┘     └─────────────────┘
         │                       │
-        │ SSE + JWT             │ VCAP_SERVICES
+        │ HTTP + JWT            │ VCAP_SERVICES
         ▼                       ▼
    MCP Protocol           CF SSO Service
+   (Streamable HTTP)
                           (p-identity/UAA)
 ```
 
@@ -322,8 +342,9 @@ curl -X POST "https://your-app.apps.your-domain.com/mcp/message?sessionId=abc123
 
 | Endpoint | Auth | Description |
 |----------|------|-------------|
-| `GET /sse` | Yes | SSE connection, returns session ID |
-| `POST /mcp/message?sessionId=<id>` | Yes | MCP JSON-RPC messages |
+| `POST /mcp` | Yes | Streamable HTTP MCP endpoint (all JSON-RPC messages) |
+| `GET /mcp` | Yes | SSE stream for server-initiated notifications |
+| `DELETE /mcp` | Yes | Terminate MCP session |
 | `GET /actuator/health` | No | Health check |
 | `GET /actuator/health/liveness` | No | Liveness probe |
 | `GET /actuator/health/readiness` | No | Readiness probe |

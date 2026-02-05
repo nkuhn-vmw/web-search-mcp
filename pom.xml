@@ -41,7 +41,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
-        <!-- Spring AI MCP Server (WebMVC with SSE support) -->
+        <!-- Spring AI MCP Server (WebMVC with Streamable HTTP support) -->
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>

@@ -15,4 +15,4 @@ applications:
     health-check-http-endpoint: /actuator/health/liveness
     services:
       # Bind your SSO service (p-identity, uaa, etc.)
-      - my-sso  # Change to your SSO service instance name
+      - cf-llama-chat-sso
