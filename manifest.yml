@@ -9,14 +9,10 @@ applications:
     env:
       JBP_CONFIG_OPEN_JDK_JRE: '{ jre: { version: 21.+ } }'
       SPRING_PROFILES_ACTIVE: cloud
-      # Web search API key (required)
-      WEBSEARCH_API_KEY: ((websearch-api-key))
-      # WEBSEARCH_PROVIDER: BRAVE  # or SERPAPI, GOOGLE_CUSTOM_SEARCH
+      WEBSEARCH_PROVIDER: BRAVE
+      # WEBSEARCH_API_KEY: Set via 'cf set-env' for security
     health-check-type: http
     health-check-http-endpoint: /actuator/health/liveness
-    routes:
-      - route: web-search-mcp.apps.internal
     services:
-      # Bind to your SSO service instance
-      # The app auto-detects these service types: p-identity, sso, uaa, xsuaa
-      - sso  # Change to your SSO service instance name
+      # Bind your SSO service (p-identity, uaa, etc.)
+      - my-sso  # Change to your SSO service instance name
