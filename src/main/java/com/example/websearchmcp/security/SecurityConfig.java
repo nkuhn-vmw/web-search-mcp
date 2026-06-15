@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnCloudPlatform;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.cloud.CloudPlatform;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,6 +33,7 @@ public class SecurityConfig {
     @Bean
     @Profile("cloud")
     @ConditionalOnCloudPlatform(CloudPlatform.CLOUD_FOUNDRY)
+    @ConditionalOnProperty(name = "websearch.security.enabled", havingValue = "true", matchIfMissing = true)
     public SecurityFilterChain cloudSecurityFilterChain(HttpSecurity http, JwtDecoder jwtDecoder) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
@@ -46,9 +48,31 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Open filter chain for Cloud Foundry when {@code websearch.security.enabled=false}.
+     * Leaves {@code /mcp} unauthenticated — intended for demos, local trials, or trusted
+     * internal networks (e.g. fronting the server with an MCP gateway that brokers auth).
+     * Default is secured; this only activates when the flag is explicitly false.
+     */
     @Bean
     @Profile("cloud")
     @ConditionalOnCloudPlatform(CloudPlatform.CLOUD_FOUNDRY)
+    @ConditionalOnProperty(name = "websearch.security.enabled", havingValue = "false")
+    public SecurityFilterChain cloudOpenSecurityFilterChain(HttpSecurity http) throws Exception {
+        log.warn("websearch.security.enabled=false — /mcp is OPEN (no JWT required). "
+                + "Use only for demos or trusted networks; set websearch.security.enabled=true for production.");
+        http
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+
+        return http.build();
+    }
+
+    @Bean
+    @Profile("cloud")
+    @ConditionalOnCloudPlatform(CloudPlatform.CLOUD_FOUNDRY)
+    @ConditionalOnProperty(name = "websearch.security.enabled", havingValue = "true", matchIfMissing = true)
     public JwtDecoder cloudJwtDecoder(
             @Value("${spring.security.oauth2.resourceserver.jwt.jwk-set-uri:}") String configuredJwkSetUri) {
 

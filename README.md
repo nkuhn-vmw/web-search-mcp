@@ -109,6 +109,18 @@ applications:
 
 The MCP endpoints require a valid JWT token from your Cloud Foundry SSO.
 
+### Disabling auth (demos / gateway-fronted deployments)
+
+On the `cloud` profile, `/mcp` is JWT-protected by default. Set
+`WEBSEARCH_SECURITY_ENABLED=false` to leave `/mcp` open — useful for quick
+demos, or when an MCP gateway in front of this server brokers authentication.
+The default is `true` (secured); when disabled the app logs a startup warning.
+
+```bash
+cf set-env web-search-mcp WEBSEARCH_SECURITY_ENABLED false
+cf restart web-search-mcp
+```
+
 ### Getting a Token
 
 **Using CF CLI (easiest):**

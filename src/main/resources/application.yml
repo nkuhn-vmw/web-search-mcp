@@ -23,6 +23,10 @@ websearch:
   default-result-count: 10
   rate-limit-per-minute: 60
   cache-expiration-seconds: 300
+  security:
+    # On the 'cloud' profile, /mcp requires a JWT by default. Set to false to
+    # leave /mcp open — for demos, or when an MCP gateway in front brokers auth.
+    enabled: ${WEBSEARCH_SECURITY_ENABLED:true}
 
 # Actuator endpoints for Cloud Foundry health checks
 management:
