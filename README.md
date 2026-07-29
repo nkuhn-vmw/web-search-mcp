@@ -8,6 +8,8 @@ A secure Spring Boot MCP (Model Context Protocol) server that provides web searc
 - **Multiple Search Providers**: Brave Search API, SerpAPI, or Google Custom Search
 - **Cloud Foundry SSO Integration**: Auto-configures OAuth2 from p-identity/UAA service bindings
 - **Security**: JWT authentication, rate limiting, and secure credential management
+- **CredHub bindings**: Resolves an exact `WEBSEARCH_API_KEY` credential from
+  Cloud Foundry `VCAP_SERVICES`, while explicit environment configuration wins
 - **Cloud Foundry Ready**: Health checks, VCAP_SERVICES support, Java 21
 
 ## MCP Tools
@@ -91,6 +93,39 @@ cf set-env web-search-mcp WEBSEARCH_API_KEY "your-api-key"
 # Start the app
 cf start web-search-mcp
 ```
+
+### Recommended: bind the API key through CredHub
+
+On foundations with the CredHub service broker, store one typed field in a
+dedicated service instance. Load the variable from your approved secret store
+without printing it:
+
+```bash
+set +x
+cf create-service credhub default web-search-brave-secret \
+  -c "$(jq -nc --arg key "${BRAVE_API_KEY}" \
+    '{WEBSEARCH_API_KEY:$key}')"
+unset BRAVE_API_KEY
+cf bind-service web-search-mcp web-search-brave-secret
+cf restage web-search-mcp
+```
+
+The application accepts only the exact `WEBSEARCH_API_KEY` field. It does not
+scan for generic `api_key` values, does not log the value, and explicit
+`WEBSEARCH_API_KEY` environment configuration takes precedence. The CredHub
+service payload has this shape:
+
+```json
+{"WEBSEARCH_API_KEY":"your-Brave-key"}
+```
+
+Do not store another `credhub-ref` inside the CredHub broker payload. Binding
+references are interpolated once; nested references are not recursively
+resolved.
+
+For a gateway-fronted deployment, map only an internal route to this backend
+and let the managed MCP Gateway provide the external boundary. Do not expose an
+unauthenticated backend on a public route.
 
 ### 3. Update manifest.yml
 

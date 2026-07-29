@@ -1,5 +1,6 @@
 package com.example.websearchmcp;
 
+import com.example.websearchmcp.config.CfWebSearchCredentialResolver;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration;
@@ -14,6 +15,10 @@ import org.springframework.cache.annotation.EnableCaching;
 public class WebSearchMcpApplication {
 
     public static void main(String[] args) {
+        if (CfWebSearchCredentialResolver.configureFromEnvironment(System.getenv())) {
+            System.out.println(
+                    "[web-search-mcp] Loaded WEBSEARCH_API_KEY from a bound Cloud Foundry service");
+        }
         SpringApplication.run(WebSearchMcpApplication.class, args);
     }
 }
