@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.4.1</version>
+        <version>3.5.16</version>
         <relativePath/>
     </parent>
 
@@ -19,7 +19,8 @@
 
     <properties>
         <java.version>21</java.version>
-        <spring-ai.version>1.1.2</spring-ai.version>
+        <netty.version>4.1.136.Final</netty.version>
+        <spring-ai.version>1.1.8</spring-ai.version>
     </properties>
 
     <dependencyManagement>
@@ -73,7 +74,7 @@
         <dependency>
             <groupId>io.pivotal.cfenv</groupId>
             <artifactId>java-cfenv-boot</artifactId>
-            <version>3.2.0</version>
+            <version>3.5.1</version>
         </dependency>
 
         <!-- HTTP Client for web search API calls -->
