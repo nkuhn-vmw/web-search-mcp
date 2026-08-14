@@ -29,8 +29,13 @@ public class WebSearchService {
 
     public WebSearchService(WebSearchProperties properties) {
         this.properties = properties;
-        this.webClient = WebClient.builder()
+        this.webClient = buildWebClient(properties.maxResponseBytes());
+    }
+
+    static WebClient buildWebClient(int maxResponseBytes) {
+        return WebClient.builder()
                 .defaultHeader(HttpHeaders.ACCEPT, MediaType.APPLICATION_JSON_VALUE)
+                .codecs(codecs -> codecs.defaultCodecs().maxInMemorySize(maxResponseBytes))
                 .build();
     }
 

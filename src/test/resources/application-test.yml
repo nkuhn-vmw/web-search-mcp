@@ -12,6 +12,7 @@ websearch:
   default-result-count: 10
   rate-limit-per-minute: 100
   cache-expiration-seconds: 60
+  max-response-bytes: 4194304
 
 management:
   endpoints:

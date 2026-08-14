@@ -330,7 +330,13 @@ curl -X POST "https://your-app.apps.your-domain.com/mcp" \
 |----------|----------|---------|-------------|
 | `WEBSEARCH_API_KEY` | Yes | - | API key for search provider |
 | `WEBSEARCH_PROVIDER` | No | `BRAVE` | `BRAVE`, `SERPAPI`, or `GOOGLE_CUSTOM_SEARCH` |
+| `WEBSEARCH_MAX_RESPONSE_BYTES` | No | `4194304` | Maximum buffered provider response, from 262144 through 16777216 bytes |
 | `SPRING_PROFILES_ACTIVE` | No | - | Set to `cloud` for CF, `local` for dev |
+
+The response limit applies to the outbound Spring WebFlux client, not the MCP
+response sent to a caller. The 4 MiB default accommodates normal Brave result
+payloads that exceed Spring's 256 KiB codec default while retaining a bounded
+memory ceiling. Raise it only when a measured provider response requires it.
 
 ### Search Provider Setup
 
