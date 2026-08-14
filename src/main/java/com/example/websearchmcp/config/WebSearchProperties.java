@@ -21,7 +21,10 @@ public record WebSearchProperties(
         int rateLimitPerMinute,
 
         @Min(1) @Max(86400)
-        int cacheExpirationSeconds
+        int cacheExpirationSeconds,
+
+        @Min(262144) @Max(16777216)
+        int maxResponseBytes
 ) {
     public WebSearchProperties {
         if (provider == null) {
@@ -35,6 +38,9 @@ public record WebSearchProperties(
         }
         if (cacheExpirationSeconds == 0) {
             cacheExpirationSeconds = 300;
+        }
+        if (maxResponseBytes == 0) {
+            maxResponseBytes = 4 * 1024 * 1024;
         }
     }
 

@@ -23,6 +23,9 @@ websearch:
   default-result-count: 10
   rate-limit-per-minute: 60
   cache-expiration-seconds: 300
+  # Brave responses regularly exceed Spring WebFlux's 256 KiB default. Keep
+  # the buffer bounded but large enough for normal result metadata.
+  max-response-bytes: ${WEBSEARCH_MAX_RESPONSE_BYTES:4194304}
   security:
     # On the 'cloud' profile, /mcp requires a JWT by default. Set to false to
     # leave /mcp open — for demos, or when an MCP gateway in front brokers auth.
